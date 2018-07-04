@@ -9,9 +9,11 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -22,7 +24,11 @@ import com.teamtreehouse.musicmachine.models.Song;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    public static final String KEY_SONG = "song";
+    public static final String EXTRA_TITLE = "EXTRA_TITLE";
+    public static final String EXTRA_SONG = "EXTRA_SONG";
+    public static final int REQUEST_FAVORITE = 0;
+    public static final String EXTRA_FAVORITE = "EXTRA_FAVORITE";
+    public static final String EXTRA_LIST_POSITION = "EXTRA_LIST_POSITION";
 
     private boolean mBound = false;
     private Button mDownloadButton;
@@ -65,14 +71,8 @@ public class MainActivity extends AppCompatActivity {
         mDownloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(MainActivity.this, "Downloading", Toast.LENGTH_SHORT).show();
-
-                // Send Messages to Handler for processing
-                for (Song song : Playlist.songs) {
-                    Intent intent = new Intent(MainActivity.this, DownloadIntentService.class);
-                    intent.putExtra(KEY_SONG, song);
-                    startService(intent);
-                }
+                // downloadSongs();
+                testIntents();
             }
         });
         mPlayButton.setOnClickListener(new View.OnClickListener() {
@@ -102,6 +102,24 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setHasFixedSize(true);
     }
 
+    private void testIntents() {
+        // Explicit intent
+        Intent intent = new Intent(this, DetailActivity.class);
+        intent.putExtra(EXTRA_TITLE, "Gradle, Gradle, Gradle");
+        startActivityForResult(intent, REQUEST_FAVORITE);
+    }
+
+    private void downloadSongs() {
+        Toast.makeText(MainActivity.this, "Downloading", Toast.LENGTH_SHORT).show();
+
+        // Send Messages to Handler for processing
+        for (Song song : Playlist.songs) {
+            Intent intent = new Intent(MainActivity.this, DownloadIntentService.class);
+            intent.putExtra(EXTRA_SONG, song);
+            startService(intent);
+        }
+    }
+
     public void changePlayButtonText(String text) {
         mPlayButton.setText(text);
     }
@@ -119,6 +137,20 @@ public class MainActivity extends AppCompatActivity {
         if (mBound) {
             unbindService(mServiceConnection);
             mBound = false;
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_FAVORITE) {
+            if (resultCode == RESULT_OK) {
+                boolean result = data.getBooleanExtra(EXTRA_FAVORITE, false);
+                Log.i(TAG, "Is favorite?" + result);
+                int position = data.getIntExtra(EXTRA_LIST_POSITION, 0);
+                Playlist.songs[position].setIsFavorite(result);
+                mAdapter.notifyItemChanged(position);
+            }
         }
     }
 }
