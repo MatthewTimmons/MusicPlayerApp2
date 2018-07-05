@@ -4,18 +4,21 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.teamtreehouse.musicmachine.adapters.PlaylistAdapter;
@@ -36,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private Messenger mServiceMessenger;
     private Messenger mActivityMessenger = new Messenger(new ActivityHandler(this));
 
+    private RelativeLayout mRootLayout;
     private PlaylistAdapter mAdapter;
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -67,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
         mDownloadButton = (Button) findViewById(R.id.downloadButton);
         mPlayButton = (Button) findViewById(R.id.playButton);
+        mRootLayout = (RelativeLayout) findViewById(R.id.root_layout);
 
         mDownloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -104,9 +109,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void testIntents() {
         // Explicit intent
-        Intent intent = new Intent(this, DetailActivity.class);
-        intent.putExtra(EXTRA_TITLE, "Gradle, Gradle, Gradle");
-        startActivityForResult(intent, REQUEST_FAVORITE);
+//        Intent intent = new Intent(this, DetailActivity.class);
+//        intent.putExtra(EXTRA_TITLE, "Gradle, Gradle, Gradle");
+//        startActivityForResult(intent, REQUEST_FAVORITE);
+
+        //Implicit intent
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        Uri geoLocation = Uri.parse("geo:0,0?q=45.548700, -122.667933(Treehouse)");
+        intent.setData(geoLocation);
+        if (intent.resolveActivity(getPackageManager()) == null) {
+            // handle the error
+            Snackbar.make(mRootLayout, "Sorry, nothing found to handle this request", Snackbar.LENGTH_LONG).show();
+        } else {
+            startActivity(intent);
+        }
     }
 
     private void downloadSongs() {
